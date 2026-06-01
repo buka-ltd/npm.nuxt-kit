@@ -64,13 +64,13 @@
   ],
   "author": "Val.istar.Guo <val.istar.guo@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/buka-inc/npm.nuxt-kit#readme",
+  "homepage": "https://github.com/buka-ltd/npm.nuxt-kit#readme",
   "bugs": {
-    "url": "https://github.com/buka-inc/npm.nuxt-kit/issues"
+    "url": "https://github.com/buka-ltd/npm.nuxt-kit/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/buka-inc/npm.nuxt-kit"
+    "url": "https://github.com/buka-ltd/npm.nuxt-kit"
   },
   "config": {
     "commitizen": {

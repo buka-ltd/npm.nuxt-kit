@@ -27,18 +27,18 @@ import {
   BukaRequestException,
   bukaErrorMiddleware,
   createBukaErrorMiddleware,
-} from '@buka/nuxt-kit'
+} from "@buka/nuxt-kit";
 ```
 
 ### Composables `@buka/nuxt-kit/composables`
 
-| 导出 | 说明 |
-|------|------|
-| `disposable(fn)` | 将函数包装为只执行一次，缓存并复用返回值（支持同步/异步） |
-| `useAsyncFn(fn)` | 追踪异步函数的 `pending` 和 `error` 状态 |
-| `useCursorPagination(defaultPageSize?)` | 游标分页数据层，维护 `startCursor`/`endCursor`/`hasNextPage` 等 |
-| `useOffsetPagination(defaultPageSize?)` | 偏移分页数据层，维护 `limit`/`offset`/`total` |
-| `useOffsetPage(state)` | 将 limit/offset/total 转换为 `page`/`pageSize`/`totalPages` 展示用 |
+| 导出                                    | 说明                                                               |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| `disposable(fn)`                        | 将函数包装为只执行一次，缓存并复用返回值（支持同步/异步）          |
+| `useAsyncFn(fn)`                        | 追踪异步函数的 `pending` 和 `error` 状态                           |
+| `useCursorPagination(defaultPageSize?)` | 游标分页数据层，维护 `startCursor`/`endCursor`/`hasNextPage` 等    |
+| `useOffsetPagination(defaultPageSize?)` | 偏移分页数据层，维护 `limit`/`offset`/`total`                      |
+| `useOffsetPage(state)`                  | 将 limit/offset/total 转换为 `page`/`pageSize`/`totalPages` 展示用 |
 
 ```typescript
 import {
@@ -46,36 +46,36 @@ import {
   useCursorPagination,
   useOffsetPagination,
   useOffsetPage,
-} from '@buka/nuxt-kit/composables'
+} from "@buka/nuxt-kit/composables";
 
 // 异步函数追踪
-const { pending, error, execute } = useAsyncFn(fetchUsers)
-const result = await execute()
+const { pending, error, execute } = useAsyncFn(fetchUsers);
+const result = await execute();
 
 // 偏移分页
-const pagination = useOffsetPagination(20)
-const { offset, limit } = pagination.nextPageParams
+const pagination = useOffsetPagination(20);
+const { offset, limit } = pagination.nextPageParams;
 
 // 游标分页
-const cursorPagination = useCursorPagination()
-const { startCursor, endCursor, hasNextPage } = cursorPagination
+const cursorPagination = useCursorPagination();
+const { startCursor, endCursor, hasNextPage } = cursorPagination;
 ```
 
 ### 工具函数 `@buka/nuxt-kit/utils`
 
-| 导出 | 说明 |
-|------|------|
+| 导出              | 说明                                                         |
+| ----------------- | ------------------------------------------------------------ |
 | `Pkce.generate()` | 生成 PKCE `[codeVerifier, codeChallenge]` 对（SHA-256 S256） |
 
 ```typescript
-import { Pkce } from '@buka/nuxt-kit/utils'
+import { Pkce } from "@buka/nuxt-kit/utils";
 
-const [codeVerifier, codeChallenge] = await Pkce.generate()
+const [codeVerifier, codeChallenge] = await Pkce.generate();
 ```
 
 ### Keq 中间件 `@buka/nuxt-kit/keq`
 
-提供 Keq HTTP 客户端的错误处理中间件和异常类，遵循 [Buka 结构化错误码规范](https://github.com/buka-inc/docs.specifications/blob/main/coding/error-codes.md)。
+提供 Keq HTTP 客户端的错误处理中间件和异常类，遵循 [Buka 结构化错误码规范](https://github.com/buka-ltd/docs.specifications/blob/main/coding/error-codes.md)。
 
 #### BukaRequestException
 
@@ -83,9 +83,9 @@ const [codeVerifier, codeChallenge] = await Pkce.generate()
 
 ```typescript
 class BukaRequestException extends RequestException {
-  code: string                 // 错误码，如 "B0-0001-1012-00B"
-  errorCode: ErrorCode         // @buka/error-codes 解析后的结构化对象
-  details: ExceptionDetail[]   // 错误详情
+  code: string; // 错误码，如 "B0-0001-1012-00B"
+  errorCode: ErrorCode; // @buka/error-codes 解析后的结构化对象
+  details: ExceptionDetail[]; // 错误详情
 }
 ```
 
@@ -94,9 +94,9 @@ class BukaRequestException extends RequestException {
 默认错误处理中间件。对 HTTP >= 400 的 JSON 响应自动解析 `{ error: { code, message, details } }` 并抛出 `BukaRequestException`；非 JSON 响应降级为 `createExceptionByStatusCode` 的兜底异常。401/403/404 自动标记为 `fatal`。
 
 ```typescript
-import { bukaErrorMiddleware } from '@buka/nuxt-kit/keq'
+import { bukaErrorMiddleware } from "@buka/nuxt-kit/keq";
 
-request.use(bukaErrorMiddleware)
+request.use(bukaErrorMiddleware);
 ```
 
 #### createBukaErrorMiddleware(options?)
@@ -107,23 +107,25 @@ request.use(bukaErrorMiddleware)
 import {
   createBukaErrorMiddleware,
   BukaRequestException,
-} from '@buka/nuxt-kit/keq'
+} from "@buka/nuxt-kit/keq";
 
 // 定义业务异常子类（空类体自动继承父类构造器）
 class SessionExpiredException extends BukaRequestException {}
 class PrincipalNotFoundException extends BukaRequestException {}
 
 // 注册错误码分发
-request.use(createBukaErrorMiddleware({
-  errorDispatchers: {
-    'B0-0001-1012-00B': SessionExpiredException,
-    'V0-0001-1005-00M': PrincipalNotFoundException,
-  },
-}))
+request.use(
+  createBukaErrorMiddleware({
+    errorDispatchers: {
+      "B0-0001-1012-00B": SessionExpiredException,
+      "V0-0001-1005-00M": PrincipalNotFoundException,
+    },
+  }),
+);
 
 // 业务层通过 instanceof 区分处理
 try {
-  await someApiCall()
+  await someApiCall();
 } catch (err) {
   if (err instanceof SessionExpiredException) {
     // 跳转登录页
@@ -142,11 +144,11 @@ try {
 
 #### 类型
 
-| 类型 | 说明 |
-|------|------|
-| `BukaRequestExceptionOptions` | 构造选项，含 `code`、`details`、`fatal`、`response` |
-| `BukaExceptionConstructor` | 异常子类构造器接口，约束 `errorDispatchers` 的 value 类型 |
-| `BukaErrorMiddlewareOptions` | `createBukaErrorMiddleware` 配置项 |
+| 类型                          | 说明                                                      |
+| ----------------------------- | --------------------------------------------------------- |
+| `BukaRequestExceptionOptions` | 构造选项，含 `code`、`details`、`fatal`、`response`       |
+| `BukaExceptionConstructor`    | 异常子类构造器接口，约束 `errorDispatchers` 的 value 类型 |
+| `BukaErrorMiddlewareOptions`  | `createBukaErrorMiddleware` 配置项                        |
 
 #### Nuxt 配置
 
@@ -155,10 +157,10 @@ try {
 export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
-      include: ['@buka/nuxt-kit/keq'],
+      include: ["@buka/nuxt-kit/keq"],
     },
   },
-})
+});
 ```
 
 ## 许可
