@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.1.0...nuxt-kit-v0.1.1) (2026-06-01)
+
+
+### Bug Fixes
+
+* 修复package.json参数错误导致的发布失败问题 ([44c84e0](https://github.com/buka-ltd/npm.nuxt-kit/commit/44c84e0a697468aeff95a63b39834fad27decb56))
+
 ## [0.1.0](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.0.2...nuxt-kit-v0.1.0) (2026-05-31)
 
 
