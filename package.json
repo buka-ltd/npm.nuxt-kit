@@ -1,6 +1,6 @@
 {
   "name": "@buka/nuxt-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Buka Nuxt/Vue Development Kit",
   "packageManager": "pnpm@10.28.2",
   "type": "module",
