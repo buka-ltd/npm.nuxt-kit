@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { BukaRequestException } from '../buka-request-exception.js'
-import { throwOneResponseError } from '../middleware.js'
+import { throwOnResponseError } from '../middleware.js'
 
 /**
  * 模拟 @keq-request/exception 模块，
@@ -41,7 +41,7 @@ function createMockContext(options: {
   }
 }
 
-describe('throwOneResponseError', () => {
+describe('throwOnResponseError', () => {
   it('JSON 错误 body 应抛出 BukaRequestException', async () => {
     const ctx = createMockContext({
       status: 400,
@@ -56,11 +56,11 @@ describe('throwOneResponseError', () => {
     const next = vi.fn()
 
     await expect(
-      throwOneResponseError()(ctx as never, next),
+      throwOnResponseError()(ctx as never, next),
     ).rejects.toThrow(BukaRequestException)
 
     await expect(
-      throwOneResponseError()(ctx as never, next),
+      throwOnResponseError()(ctx as never, next),
     ).rejects.toMatchObject({
       statusCode: 400,
       code: 'V0-0001-1000-001',
@@ -85,7 +85,7 @@ describe('throwOneResponseError', () => {
       const next = vi.fn()
 
       await expect(
-        throwOneResponseError()(ctx as never, next),
+        throwOnResponseError()(ctx as never, next),
       ).rejects.toMatchObject({
         statusCode: status,
       })
@@ -106,7 +106,7 @@ describe('throwOneResponseError', () => {
     const next = vi.fn()
 
     await expect(
-      throwOneResponseError()(ctx as never, next),
+      throwOnResponseError()(ctx as never, next),
     ).rejects.toMatchObject({
       statusCode: 422,
       message: '校验失败',
@@ -121,7 +121,7 @@ describe('throwOneResponseError', () => {
     const next = vi.fn()
 
     await expect(
-      throwOneResponseError()(ctx as never, next),
+      throwOnResponseError()(ctx as never, next),
     ).rejects.toThrow('非 JSON 错误')
   })
 
@@ -140,7 +140,7 @@ describe('throwOneResponseError', () => {
     })
     const next = vi.fn()
 
-    const middleware = throwOneResponseError({
+    const middleware = throwOnResponseError({
       errorDispatchers: {
         [errorCode]: TestCustomException,
       },
@@ -174,7 +174,7 @@ describe('throwOneResponseError', () => {
     })
     const next = vi.fn()
 
-    const middleware = throwOneResponseError({
+    const middleware = throwOnResponseError({
       errorDispatchers: {
         'B0-0001-1012-00B': TestCustomException,
       },

@@ -2,7 +2,7 @@
 export { BukaRequestException } from './buka-request-exception.js'
 export type { BukaRequestExceptionOptions } from './buka-request-exception.js'
 export {
-  throwOneResponseError,
+  throwOnResponseError,
 } from './middleware.js'
 export type {
   BukaExceptionConstructor,

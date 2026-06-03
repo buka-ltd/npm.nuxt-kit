@@ -24,7 +24,7 @@ export interface BukaExceptionConstructor {
 }
 
 /**
- * `throwOneResponseError` 的配置选项。
+ * `throwOnResponseError` 的配置选项。
  */
 export interface ThrowOneResponseErrorOptions {
   /**
@@ -41,7 +41,7 @@ export interface ThrowOneResponseErrorOptions {
  * 抛出结构化的 BukaRequestException。
  * 通过 `errorDispatchers` 可将特定错误码映射到异常子类。
  */
-export function throwOneResponseError(options?: ThrowOneResponseErrorOptions): KeqMiddleware {
+export function throwOnResponseError(options?: ThrowOneResponseErrorOptions): KeqMiddleware {
   const { errorDispatchers } = options ?? {}
 
   return async (ctx, next) => {
