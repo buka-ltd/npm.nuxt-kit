@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.1.1...nuxt-kit-v0.1.2) (2026-06-03)
+
+
+### Bug Fixes
+
+* 删除bukaErrorMiddleware这种错误的keq middleware实践方式并重命名未throwOnRequestError ([33674fe](https://github.com/buka-ltd/npm.nuxt-kit/commit/33674fee50b50159db9133b6c5e1af50039cb53d))
+
 ## [0.1.1](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.1.0...nuxt-kit-v0.1.1) (2026-06-01)
 
 
