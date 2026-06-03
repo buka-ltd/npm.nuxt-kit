@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.1.2...nuxt-kit-v0.1.3) (2026-06-03)
+
+
+### Bug Fixes
+
+* 修复中间件命名错误 ([bc3dd11](https://github.com/buka-ltd/npm.nuxt-kit/commit/bc3dd118fd18a2699302ad96720146e541ee380f))
+
 ## [0.1.2](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.1.1...nuxt-kit-v0.1.2) (2026-06-03)
 
 
