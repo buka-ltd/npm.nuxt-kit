@@ -24,9 +24,9 @@ export interface BukaExceptionConstructor {
 }
 
 /**
- * `createBukaErrorMiddleware` 的配置选项。
+ * `throwOneResponseError` 的配置选项。
  */
-export interface BukaErrorMiddlewareOptions {
+export interface ThrowOneResponseErrorOptions {
   /**
    * 错误码到异常子类构造器的映射。
    * 匹配到的错误码使用对应子类实例化，未匹配的降级为 BukaRequestException。
@@ -41,7 +41,7 @@ export interface BukaErrorMiddlewareOptions {
  * 抛出结构化的 BukaRequestException。
  * 通过 `errorDispatchers` 可将特定错误码映射到异常子类。
  */
-export function createBukaErrorMiddleware(options?: BukaErrorMiddlewareOptions): KeqMiddleware {
+export function throwOneResponseError(options?: ThrowOneResponseErrorOptions): KeqMiddleware {
   const { errorDispatchers } = options ?? {}
 
   return async (ctx, next) => {
@@ -80,7 +80,3 @@ export function createBukaErrorMiddleware(options?: BukaErrorMiddlewareOptions):
   }
 }
 
-/**
- * 无错误码分发的默认中间件实例（向后兼容）。
- */
-export const bukaErrorMiddleware: KeqMiddleware = createBukaErrorMiddleware()

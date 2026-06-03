@@ -25,8 +25,7 @@ import {
   useOffsetPage,
   Pkce,
   BukaRequestException,
-  bukaErrorMiddleware,
-  createBukaErrorMiddleware,
+  throwOneResponseError,
 } from "@buka/nuxt-kit";
 ```
 
@@ -89,23 +88,15 @@ class BukaRequestException extends RequestException {
 }
 ```
 
-#### bukaErrorMiddleware
+#### throwOneResponseError(options?)
 
-默认错误处理中间件。对 HTTP >= 400 的 JSON 响应自动解析 `{ error: { code, message, details } }` 并抛出 `BukaRequestException`；非 JSON 响应降级为 `createExceptionByStatusCode` 的兜底异常。401/403/404 自动标记为 `fatal`。
+错误处理中间件工厂函数。对 HTTP >= 400 的 JSON 响应自动解析 `{ error: { code, message, details } }` 并抛出 `BukaRequestException`；非 JSON 响应降级为 `createExceptionByStatusCode` 的兜底异常。401/403/404 自动标记为 `fatal`。
 
-```typescript
-import { bukaErrorMiddleware } from "@buka/nuxt-kit/keq";
-
-request.use(bukaErrorMiddleware);
-```
-
-#### createBukaErrorMiddleware(options?)
-
-可配置的工厂函数，支持**错误码 → 异常子类**分发。适用于需要按特定错误码抛出不同异常实例的业务场景：
+支持**错误码 → 异常子类**分发。适用于需要按特定错误码抛出不同异常实例的业务场景：
 
 ```typescript
 import {
-  createBukaErrorMiddleware,
+  throwOneResponseError,
   BukaRequestException,
 } from "@buka/nuxt-kit/keq";
 
@@ -115,7 +106,7 @@ class PrincipalNotFoundException extends BukaRequestException {}
 
 // 注册错误码分发
 request.use(
-  createBukaErrorMiddleware({
+  throwOneResponseError({
     errorDispatchers: {
       "B0-0001-1012-00B": SessionExpiredException,
       "V0-0001-1005-00M": PrincipalNotFoundException,
@@ -148,7 +139,7 @@ try {
 | ----------------------------- | --------------------------------------------------------- |
 | `BukaRequestExceptionOptions` | 构造选项，含 `code`、`details`、`fatal`、`response`       |
 | `BukaExceptionConstructor`    | 异常子类构造器接口，约束 `errorDispatchers` 的 value 类型 |
-| `BukaErrorMiddlewareOptions`  | `createBukaErrorMiddleware` 配置项                        |
+| `ThrowOneResponseErrorOptions`  | `throwOneResponseError` 配置项                        |
 
 #### Nuxt 配置
 

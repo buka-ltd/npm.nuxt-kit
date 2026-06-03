@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { BukaRequestException } from '../buka-request-exception.js'
-import { createBukaErrorMiddleware, bukaErrorMiddleware } from '../middleware.js'
+import { throwOneResponseError } from '../middleware.js'
 
 /**
  * 模拟 @keq-request/exception 模块，
@@ -41,44 +41,7 @@ function createMockContext(options: {
   }
 }
 
-describe('bukaErrorMiddleware', () => {
-  it('2xx 响应不应抛出异常', async () => {
-    const ctx = createMockContext({ status: 200, body: {} })
-    const next = vi.fn()
-
-    await expect(bukaErrorMiddleware(ctx as never, next)).resolves.toBeUndefined()
-  })
-
-  it('3xx 响应不应抛出异常', async () => {
-    const ctx = createMockContext({ status: 302 })
-    const next = vi.fn()
-
-    await expect(bukaErrorMiddleware(ctx as never, next)).resolves.toBeUndefined()
-  })
-
-  it('无 response 属性时不应抛出异常', async () => {
-    const ctx = { response: undefined }
-    const next = vi.fn()
-
-    await expect(
-      bukaErrorMiddleware(ctx as never, next),
-    ).resolves.toBeUndefined()
-  })
-
-  it('非 JSON 响应应调用 createExceptionByStatusCode 兜底', async () => {
-    const ctx = createMockContext({ status: 500, contentType: 'text/plain' })
-    const next = vi.fn()
-
-    // bukaErrorMiddleware 内会 throw，用 expect().rejects 捕获
-    await expect(
-      bukaErrorMiddleware(ctx as never, next),
-    ).rejects.toThrow('非 JSON 错误')
-
-    expect(mockCreateException).toHaveBeenCalledWith(ctx.response)
-  })
-})
-
-describe('createBukaErrorMiddleware', () => {
+describe('throwOneResponseError', () => {
   it('JSON 错误 body 应抛出 BukaRequestException', async () => {
     const ctx = createMockContext({
       status: 400,
@@ -93,11 +56,11 @@ describe('createBukaErrorMiddleware', () => {
     const next = vi.fn()
 
     await expect(
-      createBukaErrorMiddleware()(ctx as never, next),
+      throwOneResponseError()(ctx as never, next),
     ).rejects.toThrow(BukaRequestException)
 
     await expect(
-      createBukaErrorMiddleware()(ctx as never, next),
+      throwOneResponseError()(ctx as never, next),
     ).rejects.toMatchObject({
       statusCode: 400,
       code: 'V0-0001-1000-001',
@@ -122,7 +85,7 @@ describe('createBukaErrorMiddleware', () => {
       const next = vi.fn()
 
       await expect(
-        createBukaErrorMiddleware()(ctx as never, next),
+        throwOneResponseError()(ctx as never, next),
       ).rejects.toMatchObject({
         statusCode: status,
       })
@@ -143,7 +106,7 @@ describe('createBukaErrorMiddleware', () => {
     const next = vi.fn()
 
     await expect(
-      createBukaErrorMiddleware()(ctx as never, next),
+      throwOneResponseError()(ctx as never, next),
     ).rejects.toMatchObject({
       statusCode: 422,
       message: '校验失败',
@@ -158,7 +121,7 @@ describe('createBukaErrorMiddleware', () => {
     const next = vi.fn()
 
     await expect(
-      createBukaErrorMiddleware()(ctx as never, next),
+      throwOneResponseError()(ctx as never, next),
     ).rejects.toThrow('非 JSON 错误')
   })
 
@@ -177,7 +140,7 @@ describe('createBukaErrorMiddleware', () => {
     })
     const next = vi.fn()
 
-    const middleware = createBukaErrorMiddleware({
+    const middleware = throwOneResponseError({
       errorDispatchers: {
         [errorCode]: TestCustomException,
       },
@@ -211,7 +174,7 @@ describe('createBukaErrorMiddleware', () => {
     })
     const next = vi.fn()
 
-    const middleware = createBukaErrorMiddleware({
+    const middleware = throwOneResponseError({
       errorDispatchers: {
         'B0-0001-1012-00B': TestCustomException,
       },
@@ -230,31 +193,5 @@ describe('createBukaErrorMiddleware', () => {
     }
     expect(caught).toBeInstanceOf(BukaRequestException)
     expect(caught).not.toBeInstanceOf(TestCustomException)
-  })
-
-  it('bukaErrorMiddleware 应与 createBukaErrorMiddleware() 行为一致', async () => {
-    const ctx = createMockContext({
-      status: 400,
-      body: {
-        error: {
-          code: 'V0-0001-1000-001',
-          message: '错误',
-          details: [],
-        },
-      },
-    })
-    const next = vi.fn()
-
-    // 两者应有相同行为
-    const factoryMiddleware = createBukaErrorMiddleware()
-
-    let factoryErr: unknown = null
-    let constErr: unknown = null
-
-    try { await factoryMiddleware({ ...ctx } as never, vi.fn()) } catch (e) { factoryErr = e }
-    try { await bukaErrorMiddleware({ ...ctx } as never, vi.fn()) } catch (e) { constErr = e }
-
-    expect(factoryErr).toBeInstanceOf(BukaRequestException)
-    expect(constErr).toBeInstanceOf(BukaRequestException)
   })
 })
