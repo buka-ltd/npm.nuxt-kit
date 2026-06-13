@@ -80,10 +80,10 @@
   "dependencies": {
     "@buka/error-codes": "^1.1.1",
     "@buka/exception": "^1.0.4",
-    "@keq-request/exception": "^5.0.0-beta.1"
+    "@keq-request/exception": "^5.0.0-beta.10"
   },
   "peerDependencies": {
-    "keq": ">=5.0.0-beta.1",
+    "keq": ">=5.0.0-beta.10",
     "vue": ">=3.3.0"
   },
   "peerDependenciesMeta": {
@@ -105,7 +105,7 @@
     "husky": "^9.0.0",
     "is-ci": "^3.0.0",
     "jsdom": "^25.0.0",
-    "keq": "^5.0.0-beta.1",
+    "keq": "^5.0.0-beta.10",
     "standard-version": "^9.5.0",
     "typescript": "^5.9.3",
     "vite": "^6.0.0",
