@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.1.3...nuxt-kit-v0.2.0) (2026-07-05)
+
+
+### Features
+
+* 添加useCursorList和useOffsetList两个composable ([7964f44](https://github.com/buka-ltd/npm.nuxt-kit/commit/7964f44759a0529987ece85fac26ea69f0f60b40))
+
+
+### Performance Improvements
+
+* ugprade keq to 5.0.0-beta.10 ([f96cf49](https://github.com/buka-ltd/npm.nuxt-kit/commit/f96cf49e3f6297851fd2d1dd12ad68001d6a17ff))
+
 ## [0.1.3](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.1.2...nuxt-kit-v0.1.3) (2026-06-03)
 
 
