@@ -20,7 +20,9 @@ re-export 所有子模块。
 import {
   disposable,
   useAsyncFn,
+  useCursorList,
   useCursorPagination,
+  useOffsetList,
   useOffsetPagination,
   useOffsetPage,
   Pkce,
@@ -31,18 +33,22 @@ import {
 
 ### Composables `@buka/nuxt-kit/composables`
 
-| 导出                                    | 说明                                                               |
-| --------------------------------------- | ------------------------------------------------------------------ |
-| `disposable(fn)`                        | 将函数包装为只执行一次，缓存并复用返回值（支持同步/异步）          |
-| `useAsyncFn(fn)`                        | 追踪异步函数的 `pending` 和 `error` 状态                           |
-| `useCursorPagination(defaultPageSize?)` | 游标分页数据层，维护 `startCursor`/`endCursor`/`hasNextPage` 等    |
-| `useOffsetPagination(defaultPageSize?)` | 偏移分页数据层，维护 `limit`/`offset`/`total`                      |
-| `useOffsetPage(state)`                  | 将 limit/offset/total 转换为 `page`/`pageSize`/`totalPages` 展示用 |
+| 导出                                                                    | 说明                                                                                |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `disposable(fn)`                                                        | 将函数包装为只执行一次，缓存并复用返回值（支持同步/异步）                           |
+| `useAsyncFn(fn)`                                                        | 追踪异步函数的 `pending` 和 `error` 状态                                            |
+| `useCursorPagination(defaultPageSize?)`                                 | 游标分页数据层，维护 `startCursor`/`endCursor`/`hasNextPage` 等                     |
+| `useCursorList(fetchFn, options?)`                                      | 游标分页异步列表加载（无限滚动），items 累积、loading/error 状态、load/loadMore     |
+| `useOffsetList(fetchFn, options?)`                                      | 偏移分页异步列表加载（表格翻页），items 替换、loading/error 状态、refresh/goToPage   |
+| `useOffsetPagination(defaultPageSize?)`                                 | 偏移分页数据层，维护 `limit`/`offset`/`total`                                       |
+| `useOffsetPage(state)`                                                  | 将 limit/offset/total 转换为 `page`/`pageSize`/`totalPages` 展示用                  |
 
 ```typescript
 import {
   useAsyncFn,
+  useCursorList,
   useCursorPagination,
+  useOffsetList,
   useOffsetPagination,
   useOffsetPage,
 } from "@buka/nuxt-kit/composables";
@@ -51,13 +57,57 @@ import {
 const { pending, error, execute } = useAsyncFn(fetchUsers);
 const result = await execute();
 
-// 偏移分页
+// 偏移分页（数据层 + 展示层）
 const pagination = useOffsetPagination(20);
-const { offset, limit } = pagination.nextPageParams;
+const { page, pageSize, totalPages } = useOffsetPage({
+  limit: pagination.limit,
+  offset: pagination.offset,
+  total: pagination.total,
+});
 
-// 游标分页
+// 游标分页（数据层）
 const cursorPagination = useCursorPagination();
 const { startCursor, endCursor, hasNextPage } = cursorPagination;
+
+// 游标分页（异步列表加载，无限滚动）
+const { items, loading, hasMore, load, loadMore } = useCursorList(
+  async ({ first, after }) => {
+    const result = await api.listData({ page: { first, after } });
+    return {
+      items: result.data ?? [],
+      endCursor: result.meta?.pagination?.endCursor ?? null,
+      hasNextPage: result.meta?.pagination?.hasNextPage ?? false,
+    };
+  },
+);
+
+// 偏移分页（异步列表加载，表格翻页）
+const {
+  items: tableItems,
+  loading: tableLoading,
+  error: tableError,
+  page,
+  pageSize,
+  totalPages,
+  refresh,
+  goToPage,
+} = useOffsetList(
+  async ({ limit, offset }) => {
+    const result = await api.listData({ page: { limit, offset } });
+    return {
+      items: result.data ?? [],
+      total: result.meta?.pagination?.total ?? 0,
+    };
+  },
+  { pageSize: 20 },
+);
+
+// 初始加载
+await goToPage(1);
+// 翻到第三页
+await goToPage(3);
+// 刷新当前页
+await refresh();
 ```
 
 ### 工具函数 `@buka/nuxt-kit/utils`
