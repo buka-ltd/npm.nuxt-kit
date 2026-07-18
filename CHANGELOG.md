@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.2.0...nuxt-kit-v0.2.1) (2026-07-18)
+
+
+### Performance Improvements
+
+* remove useAsyncFn and use useAsyncState instead ([558b22b](https://github.com/buka-ltd/npm.nuxt-kit/commit/558b22b24783e2388fe3919f716382beffd868c9))
+
 ## [0.2.0](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.1.3...nuxt-kit-v0.2.0) (2026-07-05)
 
 
