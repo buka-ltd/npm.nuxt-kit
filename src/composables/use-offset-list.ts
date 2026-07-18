@@ -1,9 +1,36 @@
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'
-import { useAsyncFn } from './use-async-fn.js'
+import { useAsyncState } from '@vueuse/core'
 import { useOffsetPagination } from './use-offset-pagination.js'
 import { useOffsetPage } from './use-offset-page.js'
 import { isAbortError } from '../utils/is-abort-error.js'
+import type { UseListOptions } from './list-options.js'
+
+/**
+ * {@link useOffsetList} 的返回类型。
+ *
+ * @typeParam T — 列表项类型
+ */
+export interface UseOffsetListReturn<T> {
+  /** 当前页数据 */
+  items: Ref<T[]>
+  /** 是否正在加载 */
+  isLoading: Ref<boolean>
+  /** 请求错误（AbortError 已被过滤） */
+  error: Ref<unknown>
+  /** 当前页码（1-based） */
+  page: Ref<number>
+  /** 每页数量 */
+  pageSize: Ref<number>
+  /** 总页数（writable computed） */
+  totalPages: Ref<number>
+  /** 数据总数 */
+  total: Ref<number>
+  /** 重新加载当前页 */
+  refresh: () => Promise<void>
+  /** 跳转到指定页 */
+  goToPage: (page: number) => Promise<void>
+}
 
 /**
  * 基于 Offset 的异步表格列表 composable
@@ -19,10 +46,15 @@ import { isAbortError } from '../utils/is-abort-error.js'
  *   返回 `{ items, total }`
  * @param options — 可选配置
  * @param options.pageSize — 每页加载数量，默认 20
+ * @param options.immediate — 是否在创建时立即加载第一页，默认 false
+ * @param options.delay — immediate 时的延迟毫秒数，仅在 immediate 为 true 时生效，默认 0
+ * @param options.onError — 请求失败回调（AbortError 已被过滤）
+ * @param options.onSuccess — 请求成功回调，在内部状态更新后触发
+ * @param options.throwError — 执行 fetch 时是否抛出错误，默认 false
  *
  * @example
  * ```typescript
- * const { items, loading, error, page, pageSize, totalPages, refresh, goToPage } = useOffsetList(
+ * const { items, isLoading, error, page, pageSize, totalPages, refresh, goToPage } = useOffsetList(
  *   async ({ limit, offset }) => {
  *     const result = await api.listData({ page: { limit, offset } })
  *     return {
@@ -39,22 +71,18 @@ export function useOffsetList<T>(
     items: T[]
     total: number
   }>,
-  options?: {
-    /** 每页加载数量，默认 20 */
-    pageSize?: number
-  },
-): {
-  items: Ref<T[]>
-  loading: Ref<boolean>
-  error: Ref<Error | null>
-  page: Ref<number>
-  pageSize: Ref<number>
-  totalPages: Ref<number>
-  total: Ref<number>
-  refresh: () => Promise<void>
-  goToPage: (page: number) => Promise<void>
-} {
-  const pagination = useOffsetPagination(options?.pageSize)
+  options?: UseListOptions<{ items: T[]; total: number }>,
+): UseOffsetListReturn<T> {
+  const {
+    pageSize: pageSizeOption,
+    immediate = false,
+    delay = 0,
+    onError: userOnError,
+    onSuccess,
+    throwError = false,
+  } = options ?? {}
+
+  const pagination = useOffsetPagination(pageSizeOption)
   const { page, pageSize, totalPages } = useOffsetPage({
     limit: pagination.limit,
     offset: pagination.offset,
@@ -64,10 +92,35 @@ export function useOffsetList<T>(
   /** 当前页数据 */
   const items = ref<T[]>([]) as Ref<T[]>
 
-  const { pending: loading, error: rawError, execute } = useAsyncFn(
+  const initialState = {
+    items: [] as T[],
+    total: 0,
+  }
+
+  /**
+   * 包裹用户提供的 onError 回调，过滤掉 AbortError。
+   *
+   * 与 {@link error} 的行为一致：由 keq `flowControl('abort')` 或
+   * AbortController 产生的 AbortError 不应暴露给调用方。
+   */
+  const wrappedOnError = userOnError
+    ? (e: unknown) => {
+      if (!isAbortError(e)) {
+        userOnError(e)
+      }
+    }
+    : undefined
+
+  const { isLoading, error: rawError, execute: executeImmediate } = useAsyncState(
     async (params: { limit: number; offset: number }) => {
       const result = await fetchFn(params)
       return result
+    },
+    initialState,
+    {
+      immediate: false,
+      throwError,
+      onError: wrappedOnError,
     },
   )
 
@@ -91,19 +144,20 @@ export function useOffsetList<T>(
    * 不改变当前 offset/limit，适用于刷新当前页
    */
   async function refresh(): Promise<void> {
-    if (loading.value) return
-    const result = await execute({
+    if (isLoading.value) return
+    const data = await executeImmediate(undefined, {
       limit: pagination.limit.value,
       offset: pagination.offset.value,
     })
-    if (!result.success) return
+    if (data === undefined) return
 
-    items.value = result.data.items
+    items.value = data.items
     pagination.apply({
-      total: result.data.total,
+      total: data.total,
       limit: pagination.limit.value,
       offset: pagination.offset.value,
     })
+    onSuccess?.(data)
   }
 
   /**
@@ -113,33 +167,46 @@ export function useOffsetList<T>(
    * 加载中时重复调用会静默跳过。
    */
   async function goToPage(targetPage: number): Promise<void> {
-    if (loading.value) return
+    if (isLoading.value) return
     if (targetPage < 1) return
 
     page.value = targetPage
 
-    const result = await execute({
+    const data = await executeImmediate(undefined, {
       limit: pagination.limit.value,
       offset: pagination.offset.value,
     })
-    if (!result.success) return
+    if (data === undefined) return
 
-    items.value = result.data.items
+    items.value = data.items
     pagination.apply({
-      total: result.data.total,
+      total: data.total,
       limit: pagination.limit.value,
       offset: pagination.offset.value,
     })
+    onSuccess?.(data)
+  }
+
+  // immediate: 创建时自动加载第一页
+  if (immediate) {
+    const doLoad = () => {
+      void goToPage(1)
+    }
+    if (delay > 0) {
+      setTimeout(doLoad, delay)
+    } else {
+      doLoad()
+    }
   }
 
   return {
     items,
-    loading,
+    isLoading,
     error,
     page: page,
     pageSize: pageSize,
-    totalPages: totalPages, total:
-    pagination.total,
+    totalPages: totalPages,
+    total: pagination.total,
     refresh,
     goToPage,
   }

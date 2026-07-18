@@ -30,7 +30,7 @@ describe('useOffsetList', () => {
       { items: [1, 2, 3], total: 10 },
     ])
 
-    const { items, loading, page, totalPages, total, goToPage } = useOffsetList(fetchFn)
+    const { items, isLoading, page, totalPages, total, goToPage } = useOffsetList(fetchFn)
 
     await goToPage(1)
 
@@ -38,7 +38,7 @@ describe('useOffsetList', () => {
     expect(page.value).toBe(1)
     expect(total.value).toBe(10)
     expect(totalPages.value).toBe(1)
-    expect(loading.value).toBe(false)
+    expect(isLoading.value).toBe(false)
   })
 
   it('goToPage(2) 后应翻到第二页并替换 items', async () => {
@@ -153,7 +153,7 @@ describe('useOffsetList', () => {
 
   // === 防重复调用 ===
 
-  it('loading 为 true 时 goToPage 不应发起重复请求', async () => {
+  it('isLoading 为 true 时 goToPage 不应发起重复请求', async () => {
     const { fetchFn } = createMockFetch([
       { items: [1, 2], total: 10 },
       { items: [3, 4], total: 10 },
@@ -168,7 +168,7 @@ describe('useOffsetList', () => {
     expect(fetchFn).toHaveBeenCalledTimes(1)
   })
 
-  it('loading 为 true 时 refresh 不应发起重复请求', async () => {
+  it('isLoading 为 true 时 refresh 不应发起重复请求', async () => {
     const fetchFn = vi.fn()
       .mockResolvedValueOnce({ items: [1], total: 10 })
       .mockResolvedValueOnce({ items: [2], total: 10 })
@@ -191,7 +191,7 @@ describe('useOffsetList', () => {
     await goToPage(1)
 
     expect(error.value).toBeInstanceOf(Error)
-    expect(error.value?.message).toBe('网络错误')
+    expect((error.value as Error).message).toBe('网络错误')
   })
 
   it('AbortError 应被过滤，不暴露给 UI', async () => {
@@ -351,5 +351,218 @@ describe('useOffsetList', () => {
     await goToPage(3)
 
     expect(fetchFn).toHaveBeenCalledWith({ limit: 10, offset: 20 })
+  })
+
+  // === immediate 选项 ===
+
+  it('immediate: true 应在创建时自动加载第一页', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({
+      items: [1, 2, 3],
+      total: 15,
+    })
+
+    const { items, page, total, totalPages } = useOffsetList(fetchFn, { immediate: true })
+
+    // 等待异步加载完成
+    await vi.waitFor(() => {
+      expect(items.value).toEqual([1, 2, 3])
+    })
+
+    expect(page.value).toBe(1)
+    expect(total.value).toBe(15)
+    expect(totalPages.value).toBe(1)
+    expect(fetchFn).toHaveBeenCalledTimes(1)
+    expect(fetchFn).toHaveBeenCalledWith({ limit: 20, offset: 0 })
+  })
+
+  it('immediate: true 配合 delay 应延迟加载', async () => {
+    vi.useFakeTimers()
+    const fetchFn = vi.fn().mockResolvedValue({
+      items: [1],
+      total: 1,
+    })
+
+    const { items } = useOffsetList(fetchFn, { immediate: true, delay: 500 })
+
+    // 延迟期间不应发起请求
+    expect(fetchFn).not.toHaveBeenCalled()
+    expect(items.value).toEqual([])
+
+    // 推进时间
+    await vi.advanceTimersByTimeAsync(500)
+
+    expect(fetchFn).toHaveBeenCalledTimes(1)
+    expect(items.value).toEqual([1])
+
+    vi.useRealTimers()
+  })
+
+  it('immediate: false（默认）不应自动加载', () => {
+    const fetchFn = vi.fn().mockResolvedValue({
+      items: [1],
+      total: 1,
+    })
+
+    const { items } = useOffsetList(fetchFn)
+
+    expect(fetchFn).not.toHaveBeenCalled()
+    expect(items.value).toEqual([])
+  })
+
+  // === onSuccess 回调 ===
+
+  it('onSuccess 应在 goToPage 成功后触发', async () => {
+    const onSuccess = vi.fn()
+    const fetchFn = vi.fn().mockResolvedValue({
+      items: [1, 2],
+      total: 10,
+    })
+
+    const { goToPage } = useOffsetList(fetchFn, { onSuccess })
+
+    await goToPage(2)
+
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+    expect(onSuccess).toHaveBeenCalledWith({ items: [1, 2], total: 10 })
+  })
+
+  it('onSuccess 应在 refresh 成功后触发', async () => {
+    const onSuccess = vi.fn()
+    const fetchFn = vi.fn()
+      .mockResolvedValueOnce({ items: [1, 2], total: 10 })
+      .mockResolvedValueOnce({ items: [3, 4], total: 20 })
+
+    const { goToPage, refresh } = useOffsetList(fetchFn, { onSuccess })
+
+    await goToPage(1)
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+
+    await refresh()
+    expect(onSuccess).toHaveBeenCalledTimes(2)
+    expect(onSuccess).toHaveBeenLastCalledWith({ items: [3, 4], total: 20 })
+  })
+
+  it('onSuccess 应在内部状态更新后触发', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({
+      items: [1, 2],
+      total: 10,
+    })
+
+    let capturedItems: number[] = []
+    let capturedTotal = 0
+
+    const { items, total, goToPage } = useOffsetList(fetchFn, {
+      onSuccess: () => {
+        // 回调执行时，ref 应已更新为最新状态
+        capturedItems = items.value
+        capturedTotal = total.value
+      },
+    })
+
+    await goToPage(1)
+
+    expect(capturedItems).toEqual([1, 2])
+    expect(capturedTotal).toBe(10)
+  })
+
+  it('onSuccess 在 fetchFn 抛错时不应触发', async () => {
+    const onSuccess = vi.fn()
+    const fetchFn = vi.fn().mockRejectedValue(new Error('网络错误'))
+
+    const { goToPage } = useOffsetList(fetchFn, { onSuccess })
+
+    await goToPage(1)
+
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  // === onError 回调 ===
+
+  it('onError 应在 fetchFn 抛错时触发', async () => {
+    const onError = vi.fn()
+    const testError = new Error('网络错误')
+    const fetchFn = vi.fn().mockRejectedValue(testError)
+
+    const { goToPage } = useOffsetList(fetchFn, { onError })
+
+    await goToPage(1)
+
+    expect(onError).toHaveBeenCalledTimes(1)
+    expect(onError).toHaveBeenCalledWith(testError)
+  })
+
+  it('onError 不应为 AbortError 触发', async () => {
+    const onError = vi.fn()
+    const abortError = new Error('The operation was aborted.')
+    abortError.name = 'AbortError'
+    const fetchFn = vi.fn().mockRejectedValue(abortError)
+
+    const { goToPage } = useOffsetList(fetchFn, { onError })
+
+    await goToPage(1)
+
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  // === throwError 选项 ===
+
+  it('throwError: true 时 goToPage 应向外抛出错误', async () => {
+    const testError = new Error('网络错误')
+    const fetchFn = vi.fn().mockRejectedValue(testError)
+
+    const { goToPage } = useOffsetList(fetchFn, { throwError: true })
+
+    await expect(goToPage(1)).rejects.toThrow('网络错误')
+  })
+
+  it('throwError: false（默认）时 goToPage 不应抛出错误', async () => {
+    const fetchFn = vi.fn().mockRejectedValue(new Error('网络错误'))
+
+    const { goToPage } = useOffsetList(fetchFn)
+
+    // 默认行为：不抛出，通过 error ref 暴露
+    await expect(goToPage(1)).resolves.toBeUndefined()
+  })
+
+  it('throwError: true 时 AbortError 仍应被抛出', async () => {
+    const abortError = new Error('The operation was aborted.')
+    abortError.name = 'AbortError'
+    const fetchFn = vi.fn().mockRejectedValue(abortError)
+
+    const { goToPage } = useOffsetList(fetchFn, { throwError: true })
+
+    // abortError 仍然向上传播（composable 只过滤 error ref 和 onError 回调）
+    await expect(goToPage(1)).rejects.toThrow('The operation was aborted.')
+  })
+
+  // === 组合场景 ===
+
+  it('immediate: true + onSuccess 应在自动加载成功后触发', async () => {
+    const onSuccess = vi.fn()
+    const fetchFn = vi.fn().mockResolvedValue({
+      items: [1, 2],
+      total: 10,
+    })
+
+    const { items } = useOffsetList(fetchFn, { immediate: true, onSuccess })
+
+    await vi.waitFor(() => {
+      expect(items.value).toEqual([1, 2])
+    })
+
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+    expect(onSuccess).toHaveBeenCalledWith({ items: [1, 2], total: 10 })
+  })
+
+  it('immediate: true + onError 应在自动加载失败时触发', async () => {
+    const onError = vi.fn()
+    const testError = new Error('加载失败')
+    const fetchFn = vi.fn().mockRejectedValue(testError)
+
+    useOffsetList(fetchFn, { immediate: true, onError })
+
+    await vi.waitFor(() => {
+      expect(onError).toHaveBeenCalledWith(testError)
+    })
   })
 })

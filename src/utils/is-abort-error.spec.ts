@@ -69,8 +69,8 @@ describe('isAbortError', () => {
     expect(isAbortError(err)).toBe(false)
   })
 
-  it('应返回 false 对于 throw 的非 Error 值被 useAsyncFn 包装后的 Error', () => {
-    // useAsyncFn 会将非 Error 包装为 new Error('未知错误')
+  it('应返回 false 对于 throw 的非 Error 值被包装后的 Error', () => {
+    // 某些库会将非 Error 异常包装为 new Error('未知错误')
     const wrapped = new Error('未知错误')
     expect(isAbortError(wrapped)).toBe(false)
   })

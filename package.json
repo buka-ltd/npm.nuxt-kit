@@ -80,7 +80,8 @@
   "dependencies": {
     "@buka/error-codes": "^1.1.1",
     "@buka/exception": "^1.0.4",
-    "@keq-request/exception": "^5.0.0-beta.10"
+    "@keq-request/exception": "^5.0.0-beta.10",
+    "@vueuse/core": "^14.3.0"
   },
   "peerDependencies": {
     "keq": ">=5.0.0-beta.10",

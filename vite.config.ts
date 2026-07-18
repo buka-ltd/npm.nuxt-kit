@@ -24,7 +24,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['vue', 'vue-router', 'keq', '@buka/exception', '@buka/error-codes', '@keq-request/exception'],
+      external: ['vue', 'vue-router', 'keq', '@buka/exception', '@buka/error-codes', '@keq-request/exception', '@vueuse/core'],
     },
     sourcemap: true,
     target: ['chrome87', 'firefox78', 'safari14', 'edge88', 'node18'],
