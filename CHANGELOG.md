@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.2.1...nuxt-kit-v0.3.0) (2026-08-06)
+
+
+### Features
+
+* 新增useErrorMessage composable ([d33f078](https://github.com/buka-ltd/npm.nuxt-kit/commit/d33f078106a4d43989c2da3d032bf99ce830e698))
+
 ## [0.2.1](https://github.com/buka-ltd/npm.nuxt-kit/compare/nuxt-kit-v0.2.0...nuxt-kit-v0.2.1) (2026-07-18)
 
 
