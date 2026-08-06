@@ -25,6 +25,7 @@ import {
   useOffsetList,
   useOffsetPagination,
   useOffsetPage,
+  useErrorMessage,
   Pkce,
   BukaRequestException,
   throwOnResponseError,
@@ -42,6 +43,7 @@ import {
 | `useOffsetList(fetchFn, options?)`                                      | 偏移分页异步列表加载（表格翻页），items 替换、loading/error 状态、refresh/goToPage   |
 | `useOffsetPagination(defaultPageSize?)`                                 | 偏移分页数据层，维护 `limit`/`offset`/`total`                                       |
 | `useOffsetPage(state)`                                                  | 将 limit/offset/total 转换为 `page`/`pageSize`/`totalPages` 展示用                  |
+| `useErrorMessage(error, fallback?)`                                     | 将错误对象（响应式或静态）转换为可读消息字符串，无错误时返回 undefined               |
 
 ```typescript
 import {
@@ -51,7 +53,13 @@ import {
   useOffsetList,
   useOffsetPagination,
   useOffsetPage,
+  useErrorMessage,
 } from "@buka/nuxt-kit/composables";
+
+// 错误消息提取
+const { error } = useOffsetList(fetchFn);
+const errorMessage = useErrorMessage(error, "加载列表失败");
+// errorMessage.value → undefined（无错误时）或 "网络错误" 等
 
 // 异步函数追踪
 const { pending, error, execute } = useAsyncFn(fetchUsers);

@@ -11,4 +11,4 @@ export { useOffsetPage } from './use-offset-page.js'
 export type { OffsetPaginationState } from './use-offset-page.js'
 export { useOffsetPagination } from './use-offset-pagination.js'
 export type { OffsetPaginationMeta } from './use-offset-pagination.js'
-
+export { useErrorMessage } from './use-error-message.js'
